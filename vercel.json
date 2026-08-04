@@ -1,0 +1,8 @@
+{
+  "rewrites": [
+    {
+      "source": "/",
+      "destination": "/content-refresh-tool.html"
+    }
+  ]
+}
