@@ -614,7 +614,7 @@ STRICT RULES:
 3. Preserve structure exactly:
    - HTML: every tag, attribute, class, and nesting stays identical. Change only the text between tags.
    - JSON: return the same keys and schema, valid JSON, same order.
-4. Do not hallucinate exact dates if they aren't known; use placeholders like "expected in [TARGET YEAR]" if needed, or simply update the year.
+4. SCRUB OLD DATES: The provided content contains exact dates from a past cycle. You MUST replace all specific past dates (like "20th January 2026", "January 2026", etc.) with "To be notified" or "To be announced". Never leave exact dates from previous cycles.
 5. Output ONLY the updated CONTENT, in the exact same format received. No commentary, no markdown fences, no notes.
 6. CRITICAL: DO NOT TRUNCATE. You must output the ENTIRE length of the provided content from start to finish. Do not omit, summarize, or skip any tags or text, even if they are long or unchanged.`;
 
