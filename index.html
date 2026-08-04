@@ -523,46 +523,28 @@ function switchTab(tabId, btnElement) {
 // ==========================================
 // API CONFIGURATION
 // ==========================================
-// IMPORTANT: Put your OpenAI API key here
-const OPENAI_API_KEY = "YOUR_API_KEY_HERE";
 
 /**
- * Single clearly-commented function to call the model.
- * Easy to swap with another API endpoint if needed.
+ * Single clearly-commented function to call the backend model securely.
  */
 async function callModel(systemPrompt, userContent) {
-  if (!OPENAI_API_KEY || OPENAI_API_KEY === "YOUR_API_KEY_HERE") {
-    throw new Error("Missing API Key. Please edit the HTML file and set OPENAI_API_KEY.");
-  }
-  
-  const url = "https://api.openai.com/v1/chat/completions";
-  const payload = {
-    model: "gpt-4o-2024-08-06",
-    messages: [
-      { role: "system", content: systemPrompt },
-      { role: "user", content: userContent }
-    ],
-    temperature: 0.0,
-    max_tokens: 16384
-  };
+  const url = "/api/extract";
+  const payload = { systemPrompt, userContent };
 
   const response = await fetch(url, {
     method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "Authorization": `Bearer ${OPENAI_API_KEY}`
-    },
+    headers: { "Content-Type": "application/json" },
     body: JSON.stringify(payload)
   });
 
   if (!response.ok) {
     const errorData = await response.json().catch(() => ({}));
-    const errorMsg = errorData.error?.message || `HTTP ${response.status} ${response.statusText}`;
+    const errorMsg = errorData.error || `HTTP ${response.status} ${response.statusText}`;
     throw new Error(`API Error: ${errorMsg}`);
   }
 
   const data = await response.json();
-  return data.choices[0].message.content;
+  return data.result;
 }
 
 // ==========================================
