@@ -1,0 +1,1029 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Content Refresh Tool</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
+<style>
+  :root {
+    --accent: #4f46e5;
+    --accent-hover: #4338ca;
+    --bg: #f3f4f6;
+    --surface: #ffffff;
+    --border: #e5e7eb;
+    --text: #111827;
+    --text-muted: #6b7280;
+    --danger: #ef4444;
+    --warning: #f59e0b;
+    --success: #10b981;
+    --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  }
+  body {
+    font-family: var(--font-sans);
+    background-color: var(--bg);
+    color: var(--text);
+    margin: 0;
+    padding: 2rem;
+    line-height: 1.5;
+  }
+  .container {
+    max-width: 900px;
+    margin: 0 auto;
+  }
+  .header {
+    text-align: center;
+    margin-bottom: 2rem;
+  }
+  h1 {
+    font-size: 2rem;
+    font-weight: 700;
+    margin: 0;
+    letter-spacing: -0.025em;
+    color: #111827;
+  }
+  .subtitle {
+    color: var(--text-muted);
+    margin-top: 0.5rem;
+  }
+  
+  /* Tabs Navigation */
+  .tabs {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 2rem;
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 1px; /* To overlap borders */
+  }
+  .tab-btn {
+    background: transparent;
+    border: none;
+    color: var(--text-muted);
+    font-size: 1rem;
+    font-weight: 500;
+    padding: 0.75rem 1.5rem;
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    transition: all 0.2s ease;
+    margin-bottom: -1px;
+  }
+  .tab-btn:hover {
+    color: var(--text);
+  }
+  .tab-btn.active {
+    color: var(--accent);
+    border-bottom-color: var(--accent);
+  }
+  
+  /* Step Content panes */
+  .step-pane {
+    display: none;
+    animation: fadeIn 0.3s ease;
+  }
+  .step-pane.active {
+    display: block;
+  }
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(5px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  
+  /* Card Design */
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 2rem;
+    box-shadow: var(--shadow-lg);
+  }
+  
+  /* Form Elements */
+  .form-group {
+    margin-bottom: 1.5rem;
+  }
+  label {
+    display: block;
+    font-weight: 600;
+    font-size: 0.875rem;
+    margin-bottom: 0.5rem;
+    color: #374151;
+  }
+  textarea {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 1rem;
+    font-family: var(--font-mono);
+    font-size: 0.875rem;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    resize: vertical;
+    min-height: 120px;
+    background: #f9fafb;
+    transition: all 0.2s;
+  }
+  textarea:focus {
+    outline: none;
+    border-color: var(--accent);
+    background: #ffffff;
+    box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+  }
+  
+  /* File Upload area */
+  .file-drop-area {
+    border: 2px dashed var(--border);
+    border-radius: 8px;
+    padding: 2rem 1rem;
+    text-align: center;
+    background: #f9fafb;
+    transition: all 0.2s;
+    position: relative;
+    cursor: pointer;
+    margin-bottom: 1rem;
+  }
+  .file-drop-area:hover {
+    border-color: var(--accent);
+    background: #f5f3ff;
+  }
+  .file-drop-area input[type="file"] {
+    position: absolute;
+    top: 0; left: 0; width: 100%; height: 100%;
+    opacity: 0;
+    cursor: pointer;
+  }
+  .file-drop-text {
+    font-size: 0.875rem;
+    color: var(--text-muted);
+    font-weight: 500;
+  }
+  .file-drop-text span {
+    color: var(--accent);
+    font-weight: 600;
+  }
+  
+  .row {
+    display: flex;
+    gap: 1.5rem;
+  }
+  .col {
+    flex: 1;
+  }
+  .button-group {
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+    margin-bottom: 1.5rem;
+  }
+  
+  /* Buttons */
+  button {
+    background-color: var(--accent);
+    color: white;
+    border: none;
+    padding: 0.625rem 1.25rem;
+    font-size: 0.875rem;
+    font-weight: 600;
+    border-radius: 6px;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    transition: all 0.2s;
+    box-shadow: var(--shadow);
+  }
+  button:hover:not(:disabled) {
+    background-color: var(--accent-hover);
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-lg);
+  }
+  button:disabled {
+    background-color: #9ca3af;
+    cursor: not-allowed;
+    box-shadow: none;
+    transform: none;
+  }
+  button.secondary {
+    background-color: var(--surface);
+    color: #374151;
+    border: 1px solid #d1d5db;
+    box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  }
+  button.secondary:hover:not(:disabled) {
+    background-color: #f9fafb;
+    border-color: #9ca3af;
+  }
+  
+  .type-detector {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.75rem;
+  }
+  select {
+    padding: 0.5rem 2rem 0.5rem 1rem;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: var(--text);
+    outline: none;
+    background-color: var(--surface);
+    cursor: pointer;
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/200%2Fsvg' fill='none' viewBox='0 0 24 24' stroke='%236b7280'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C%2Fpath%3E%3C%2Fsvg%3E");
+    background-repeat: no-repeat;
+    background-position: right 0.5rem center;
+    background-size: 1rem;
+  }
+  select:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+  }
+  .chip {
+    padding: 0.25rem 0.75rem;
+    background: #f1f5f9;
+    border: 1px solid #e2e8f0;
+    border-radius: 9999px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--text-muted);
+  }
+  
+  /* Validation Strip */
+  .validation-strip {
+    display: flex;
+    gap: 1rem;
+    margin-top: 1.5rem;
+    padding: 1rem;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    font-size: 0.875rem;
+  }
+  .validation-item {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+  }
+  .val-label {
+    font-weight: 600;
+    color: var(--text-muted);
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+  .val-value {
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+  .indicator {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+  }
+  .ind-green { background-color: var(--success); box-shadow: 0 0 0 3px rgba(16,185,129,0.1); }
+  .ind-amber { background-color: var(--warning); box-shadow: 0 0 0 3px rgba(245,158,11,0.1); }
+  .ind-red { background-color: var(--danger); box-shadow: 0 0 0 3px rgba(239,68,68,0.1); }
+  .ind-gray { background-color: #cbd5e1; }
+  
+  .text-green { color: #059669; }
+  .text-amber { color: #d97706; }
+  .text-red { color: #dc2626; }
+  .text-gray { color: var(--text-muted); }
+  
+  .error-banner {
+    background-color: #fef2f2;
+    border: 1px solid #fecaca;
+    color: #b91c1c;
+    padding: 1rem;
+    border-radius: 6px;
+    margin-bottom: 1.5rem;
+    font-size: 0.875rem;
+    font-weight: 500;
+    display: none;
+  }
+  
+  /* Spinner */
+  .spinner {
+    border: 2px solid rgba(255,255,255,0.3);
+    border-top: 2px solid white;
+    border-radius: 50%;
+    width: 14px;
+    height: 14px;
+    animation: spin 1s linear infinite;
+    display: none;
+  }
+  @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+  button.loading .spinner { display: inline-block; }
+  button.loading .btn-text { opacity: 0.9; }
+</style>
+</head>
+<body>
+
+<div class="container">
+  <div class="header">
+    <h1>Content Refresh Tool</h1>
+    <div class="subtitle">AI-powered smart factual updates for exam portals</div>
+  </div>
+
+  <div class="tabs">
+    <button class="tab-btn active" onclick="switchTab('tab1', this)">1. Extract Facts</button>
+    <button class="tab-btn" onclick="switchTab('tab2', this)">2. Update Content</button>
+    <button class="tab-btn" onclick="switchTab('tab3', this)">3. Future Projection</button>
+  </div>
+
+  <!-- TAB 1: EXTRACT FACTS -->
+  <div class="step-pane active" id="tab1">
+    <div class="card">
+      <div id="step1-error" class="error-banner"></div>
+      
+      <div class="row">
+        <div class="col form-group">
+          <label>Upload Notification (PDF or Image)</label>
+          <div class="file-drop-area">
+            <input type="file" id="pdfFile" accept=".pdf,image/jpeg,image/png" onchange="handleFileUpload(event)" />
+            <div class="file-drop-text">Drag & drop or <span>browse</span> to upload</div>
+            <div id="file-name-display" style="margin-top: 0.5rem; font-size: 0.75rem; color: var(--accent); font-weight: 600;"></div>
+          </div>
+          
+          <label for="pdfText" style="margin-top: 1rem; color: var(--text-muted);">Or paste raw text manually</label>
+          <textarea id="pdfText" placeholder="Paste raw text here..."></textarea>
+        </div>
+        
+        <div class="col form-group">
+          <label for="verifiedFacts">Verified facts</label>
+          <textarea id="verifiedFacts" placeholder="Extracted facts will appear here. You can manually edit these if needed before moving to Step 2."></textarea>
+        </div>
+      </div>
+      
+      <div class="button-group">
+        <button id="btnExtract" onclick="handleExtract()">
+          <span class="spinner"></span>
+          <span class="btn-text">Extract Facts</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- TAB 2: UPDATE CONTENT -->
+  <div class="step-pane" id="tab2">
+    <div class="card">
+      <div id="step2-error" class="error-banner"></div>
+      
+      <div class="form-group">
+        <label for="inputContent">Paste cell content to update</label>
+        <textarea id="inputContent" placeholder="Paste HTML snippet, FAQ JSON, or plain text here..." oninput="handleContentInput()"></textarea>
+      </div>
+      
+      <div class="button-group">
+        <div class="type-detector">
+          <select id="typeSelect" onchange="handleTypeChange()">
+            <option value="auto">Auto-detect Type</option>
+            <option value="html">HTML</option>
+            <option value="json">FAQ JSON</option>
+            <option value="text">Plain text</option>
+          </select>
+          <span id="typeChip" class="chip" style="display:none;">Detected: none</span>
+        </div>
+        
+        <button id="btnUpdate" onclick="handleUpdate()" disabled>
+          <span class="spinner"></span>
+          <span class="btn-text">Apply Verified Facts</span>
+        </button>
+      </div>
+      
+      <div class="form-group">
+        <label for="outputContent">Updated content</label>
+        <textarea id="outputContent" placeholder="Updated content will appear here..."></textarea>
+      </div>
+      
+      <div class="button-group">
+        <button id="btnCopy" class="secondary" onclick="copyOutput()" disabled>
+          <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path></svg>
+          <span class="btn-text">Copy for Sheet</span>
+        </button>
+        <span id="copyFeedback" style="display:none; color: var(--success); font-size: 0.875rem; margin-left: 0.5rem; font-weight: 600;">Copied!</span>
+      </div>
+      
+      <div class="validation-strip">
+        <div class="validation-item">
+          <span class="val-label">Structure</span>
+          <span class="val-value text-gray" id="val-struct-val">
+            <div class="indicator ind-gray" id="val-struct-ind"></div>
+            <span id="val-struct-text">Pending</span>
+          </span>
+        </div>
+        <div class="validation-item">
+          <span class="val-label">Format valid</span>
+          <span class="val-value text-gray" id="val-format-val">
+            <div class="indicator ind-gray" id="val-format-ind"></div>
+            <span id="val-format-text">Pending</span>
+          </span>
+        </div>
+        <div class="validation-item">
+          <span class="val-label">Size change</span>
+          <span class="val-value text-gray" id="val-size-val">
+            <div class="indicator ind-gray" id="val-size-ind"></div>
+            <span id="val-size-text">Pending</span>
+          </span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TAB 3: FUTURE PROJECTION -->
+  <div class="step-pane" id="tab3">
+    <div class="card">
+      <div id="step3-error" class="error-banner"></div>
+      
+      <div class="form-group">
+        <label for="inputContent3">Paste cell content to project into the future</label>
+        <textarea id="inputContent3" placeholder="Paste HTML snippet, FAQ JSON, or plain text here..." oninput="handleContentInput3()"></textarea>
+      </div>
+      
+      <div class="button-group">
+        <div class="type-detector">
+          <select id="targetYear">
+            <option value="2026">Target Year: 2026</option>
+            <option value="2027">Target Year: 2027</option>
+            <option value="2028">Target Year: 2028</option>
+          </select>
+          <span id="typeChip3" class="chip" style="display:none;">Detected: none</span>
+        </div>
+        
+        <button id="btnFutureUpdate" onclick="handleFutureUpdate()" disabled>
+          <span class="spinner"></span>
+          <span class="btn-text">Project to Future Year</span>
+        </button>
+      </div>
+      
+      <div class="form-group">
+        <label for="outputContent3">Projected content</label>
+        <textarea id="outputContent3" placeholder="Projected content will appear here..."></textarea>
+      </div>
+      
+      <div class="button-group">
+        <button id="btnCopy3" class="secondary" onclick="copyOutput3()" disabled>
+          <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path></svg>
+          <span class="btn-text">Copy for Sheet</span>
+        </button>
+        <span id="copyFeedback3" style="display:none; color: var(--success); font-size: 0.875rem; margin-left: 0.5rem; font-weight: 600;">Copied!</span>
+      </div>
+      
+      <div class="validation-strip">
+        <div class="validation-item">
+          <span class="val-label">Structure</span>
+          <span class="val-value text-gray" id="val3-struct-val">
+            <div class="indicator ind-gray" id="val3-struct-ind"></div>
+            <span id="val3-struct-text">Pending</span>
+          </span>
+        </div>
+        <div class="validation-item">
+          <span class="val-label">Format valid</span>
+          <span class="val-value text-gray" id="val3-format-val">
+            <div class="indicator ind-gray" id="val3-format-ind"></div>
+            <span id="val3-format-text">Pending</span>
+          </span>
+        </div>
+        <div class="validation-item">
+          <span class="val-label">Size change</span>
+          <span class="val-value text-gray" id="val3-size-val">
+            <div class="indicator ind-gray" id="val3-size-ind"></div>
+            <span id="val3-size-text">Pending</span>
+          </span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+// ==========================================
+// TAB LOGIC
+// ==========================================
+function switchTab(tabId, btnElement) {
+  // Hide all panes
+  document.querySelectorAll('.step-pane').forEach(el => el.classList.remove('active'));
+  // Remove active from all buttons
+  document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+  
+  // Activate selected pane and button
+  document.getElementById(tabId).classList.add('active');
+  btnElement.classList.add('active');
+}
+
+// ==========================================
+// API CONFIGURATION
+// ==========================================
+// IMPORTANT: Put your OpenAI API key here
+const OPENAI_API_KEY = "YOUR_API_KEY_HERE";
+
+/**
+ * Single clearly-commented function to call the model.
+ * Easy to swap with another API endpoint if needed.
+ */
+async function callModel(systemPrompt, userContent) {
+  if (!OPENAI_API_KEY || OPENAI_API_KEY === "YOUR_API_KEY_HERE") {
+    throw new Error("Missing API Key. Please edit the HTML file and set OPENAI_API_KEY.");
+  }
+  
+  const url = "https://api.openai.com/v1/chat/completions";
+  const payload = {
+    model: "gpt-4o-2024-08-06",
+    messages: [
+      { role: "system", content: systemPrompt },
+      { role: "user", content: userContent }
+    ],
+    temperature: 0.0,
+    max_tokens: 16384
+  };
+
+  const response = await fetch(url, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "Authorization": `Bearer ${OPENAI_API_KEY}`
+    },
+    body: JSON.stringify(payload)
+  });
+
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+    const errorMsg = errorData.error?.message || `HTTP ${response.status} ${response.statusText}`;
+    throw new Error(`API Error: ${errorMsg}`);
+  }
+
+  const data = await response.json();
+  return data.choices[0].message.content;
+}
+
+// ==========================================
+// SYSTEM PROMPTS
+// ==========================================
+const EXTRACT_PROMPT = `You are an exam-notification fact extractor. You receive the text of ONE official exam notification. Extract only the hard factual data, exactly as stated.
+
+Return a clean list under these headings. If a value is not stated, write "NOT STATED" — never guess, infer, or fill from general knowledge.
+
+- Exam / Recruitment name (official):
+- Conducting body:
+- Year / cycle:
+- Total vacancies / posts:
+- Application start date:
+- Application end date:
+- Fee payment last date:
+- Admit card release date:
+- Exam date(s) (stage-wise if given):
+- Result date:
+- Answer key date:
+- Age limits (min / max):
+- Application fee (category-wise if given):
+- Salary / pay scale:
+- Cut-off marks (if in this notification):
+- Official website / notification link:
+- Any other dated event stated:
+
+RULES:
+- Copy values exactly as written (same dates, same numbers).
+- Do not add commentary. Output only the list above.`;
+
+const UPDATE_PROMPT = `You are a factual-update engine for exam-information web pages. You receive:
+(A) NOTIFICATION FACTS — verified data extracted from one official notification.
+(B) CONTENT — one block the user pasted: HTML, plain text, or FAQ JSON.
+
+YOUR ONLY JOB: replace outdated FACTUAL data in the CONTENT with the correct values from the NOTIFICATION FACTS. Change nothing else.
+
+WHAT TO UPDATE (only these):
+- Year / cycle (e.g. 2023 -> 2025-26)
+- Exam dates, admit card dates, result dates, answer key dates, application windows
+- Vacancy / post counts, cut-off marks, fees, age limits, salary figures
+- Official names and links IF changed in the notification
+- Placeholders like "To be updated soon" — fill ONLY if the value is in NOTIFICATION FACTS
+
+STRICT RULES:
+1. Do NOT add sentences, sections, tips, points, or explanations.
+2. Do NOT delete content unless a fact makes it factually wrong.
+3. Do NOT paraphrase or rewrite generic/explanatory text. Leave it word-for-word.
+4. If a value is "NOT STATED" or absent in NOTIFICATION FACTS, leave the existing text or placeholder UNCHANGED. Never invent, infer, or guess a date or number.
+5. Preserve structure exactly:
+   - HTML: every tag, attribute, class, and nesting stays identical. Change only the text between tags. Return the same tags in the same order.
+   - JSON: return the same keys and schema, valid JSON, same order. Change only values.
+   - Plain text (meta/OG fields): keep length and style; change only the facts.
+6. Tense only: if a changed fact makes an event past, adjust ONLY that sentence's tense. Touch no other sentence.
+7. Output ONLY the updated CONTENT, in the exact same format received. No commentary, no markdown code fences, no notes.
+8. CRITICAL: DO NOT TRUNCATE. You must output the ENTIRE length of the provided content from start to finish. Do not omit, summarize, or skip any tags or text, even if they are long or unchanged.`;
+
+const FUTURE_PROMPT = `You are a speculative content updater for exam web pages. You receive:
+(A) TARGET YEAR — the upcoming year we are projecting for.
+(B) CONTENT — one block the user pasted: HTML, plain text, or FAQ JSON.
+
+YOUR ONLY JOB: update the provided content to anticipate an upcoming event for the TARGET YEAR.
+
+STRICT RULES:
+1. Update any historical year references to match the TARGET YEAR (e.g., "SSC CGL 2024" -> "SSC CGL 2026").
+2. Shift sentences to future tense where appropriate (e.g., "The notification was released" -> "The notification is expected to be released").
+3. Preserve structure exactly:
+   - HTML: every tag, attribute, class, and nesting stays identical. Change only the text between tags.
+   - JSON: return the same keys and schema, valid JSON, same order.
+4. Do not hallucinate exact dates if they aren't known; use placeholders like "expected in [TARGET YEAR]" if needed, or simply update the year.
+5. Output ONLY the updated CONTENT, in the exact same format received. No commentary, no markdown fences, no notes.
+6. CRITICAL: DO NOT TRUNCATE. You must output the ENTIRE length of the provided content from start to finish. Do not omit, summarize, or skip any tags or text, even if they are long or unchanged.`;
+
+// ==========================================
+// LOGIC
+// ==========================================
+
+function showError(step, message) {
+  const el = document.getElementById(`step${step}-error`);
+  el.textContent = message;
+  el.style.display = "block";
+}
+
+function hideError(step) {
+  const el = document.getElementById(`step${step}-error`);
+  el.style.display = "none";
+}
+
+// File Upload State
+let uploadedImageBase64 = null;
+pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
+
+async function handleFileUpload(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  
+  const ext = file.name.split('.').pop().toLowerCase();
+  hideError(1);
+  
+  if (['jpg', 'jpeg', 'png'].includes(ext)) {
+    // Read Image as Base64 for Vision API
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      uploadedImageBase64 = e.target.result;
+      document.getElementById("pdfText").value = `[Image Attached: ${file.name}]`;
+      document.getElementById("file-name-display").textContent = file.name;
+      document.getElementById("pdfText").disabled = true;
+    };
+    reader.readAsDataURL(file);
+  } else if (ext === 'pdf') {
+    // Read PDF Text using pdf.js
+    uploadedImageBase64 = null;
+    document.getElementById("pdfText").disabled = false;
+    document.getElementById("pdfText").value = "Extracting text from PDF, please wait...";
+    document.getElementById("file-name-display").textContent = file.name;
+    
+    try {
+      const fileReader = new FileReader();
+      fileReader.onload = async function() {
+        try {
+          const typedarray = new Uint8Array(this.result);
+          const pdf = await pdfjsLib.getDocument(typedarray).promise;
+          let fullText = "";
+          
+          for (let i = 1; i <= pdf.numPages; i++) {
+            const page = await pdf.getPage(i);
+            const content = await page.getTextContent();
+            const strings = content.items.map(item => item.str);
+            fullText += strings.join(" ") + "\n";
+          }
+          
+          if (!fullText.trim()) {
+             document.getElementById("pdfText").value = "Scanned PDF detected. Running OCR... (This may take a moment)";
+             let ocrText = "";
+             for (let j = 1; j <= pdf.numPages; j++) {
+               const page = await pdf.getPage(j);
+               const viewport = page.getViewport({ scale: 1.5 });
+               const canvas = document.createElement('canvas');
+               canvas.height = viewport.height;
+               canvas.width = viewport.width;
+               await page.render({ canvasContext: canvas.getContext('2d'), viewport: viewport }).promise;
+               document.getElementById("pdfText").value = "Running OCR on page " + j + " of " + pdf.numPages + "...";
+               const result = await Tesseract.recognize(canvas, 'eng');
+               ocrText += result.data.text + "\n";
+             }
+             document.getElementById("pdfText").value = ocrText;
+          } else {
+             document.getElementById("pdfText").value = fullText;
+          }
+        } catch(e) {
+           showError(1, "Failed to parse PDF content: " + e.message);
+           document.getElementById("pdfText").value = "";
+        }
+      };
+      fileReader.readAsArrayBuffer(file);
+    } catch (err) {
+      showError(1, "Failed to read file: " + err.message);
+      document.getElementById("pdfText").value = "";
+    }
+  } else {
+     showError(1, "Unsupported file type. Please upload PDF, JPG, or PNG.");
+     uploadedImageBase64 = null;
+  }
+}
+
+async function handleExtract() {
+  hideError(1);
+  const pdfText = document.getElementById("pdfText").value.trim();
+  if (!pdfText && !uploadedImageBase64) {
+    showError(1, "Please upload a file or paste notification text before extracting.");
+    return;
+  }
+  
+  const btn = document.getElementById("btnExtract");
+  btn.classList.add("loading");
+  btn.disabled = true;
+  
+  try {
+    let result;
+    if (uploadedImageBase64) {
+      // Send image to vision model
+      const userContent = [
+        { type: "text", text: "Please extract facts from this image exactly according to the system prompt instructions." },
+        { type: "image_url", image_url: { url: uploadedImageBase64 } }
+      ];
+      result = await callModel(EXTRACT_PROMPT, userContent);
+    } else {
+      result = await callModel(EXTRACT_PROMPT, pdfText);
+    }
+    
+    document.getElementById("verifiedFacts").value = stripMarkdownFences(result);
+    checkStep2Ready();
+  } catch (error) {
+    showError(1, error.message + " — Please verify your API key and connection, then try again.");
+  } finally {
+    btn.classList.remove("loading");
+    btn.disabled = false;
+  }
+}
+
+let detectedType = "text";
+
+function detectFormat(text) {
+  text = text.trim();
+  if (!text) return "text";
+  
+  // Try JSON
+  try {
+    const parsed = JSON.parse(text);
+    if (typeof parsed === 'object' && parsed !== null) {
+      return "json";
+    }
+  } catch (e) {}
+
+  // Try HTML (basic check if it contains a tag)
+  if (/<[a-z][\s\S]*>/i.test(text)) {
+    return "html";
+  }
+
+  return "text";
+}
+
+function handleContentInput() {
+  const select = document.getElementById("typeSelect");
+  const chip = document.getElementById("typeChip");
+  const text = document.getElementById("inputContent").value;
+  
+  if (select.value === "auto") {
+    detectedType = detectFormat(text);
+    chip.style.display = text ? "inline-block" : "none";
+    chip.textContent = "Detected: " + (detectedType === "json" ? "FAQ JSON" : (detectedType === "html" ? "HTML" : "Plain text"));
+  }
+  
+  checkStep2Ready();
+}
+
+function handleTypeChange() {
+  const select = document.getElementById("typeSelect");
+  const chip = document.getElementById("typeChip");
+  
+  if (select.value === "auto") {
+    handleContentInput(); // re-detect
+  } else {
+    detectedType = select.value;
+    chip.style.display = "none";
+  }
+}
+
+function checkStep2Ready() {
+  const facts = document.getElementById("verifiedFacts").value.trim();
+  const content = document.getElementById("inputContent").value.trim();
+  document.getElementById("btnUpdate").disabled = !(facts && content);
+}
+
+document.getElementById("verifiedFacts").addEventListener("input", checkStep2Ready);
+
+function stripMarkdownFences(text) {
+  text = text.trim();
+  if (text.startsWith("\`\`\`")) {
+    const lines = text.split("\\n");
+    if (lines.length > 1) {
+      lines.shift();
+      if (lines[lines.length - 1].trim() === "\`\`\`") {
+        lines.pop();
+      }
+      return lines.join("\\n").trim();
+    }
+  }
+  return text;
+}
+
+function countHtmlTags(htmlStr) {
+  const matches = htmlStr.match(/<[^>]+>/g);
+  return matches ? matches.length : 0;
+}
+
+function countJsonKeys(obj) {
+  if (typeof obj !== 'object' || obj === null) return 0;
+  let count = Object.keys(obj).length;
+  for (const key in obj) {
+    count += countJsonKeys(obj[key]);
+  }
+  return count;
+}
+
+function setValidationItem(prefix, idPrefix, color, text) {
+  document.getElementById(`${prefix}-${idPrefix}-ind`).className = `indicator ind-${color}`;
+  document.getElementById(`${prefix}-${idPrefix}-text`).textContent = text;
+  document.getElementById(`${prefix}-${idPrefix}-val`).className = `val-value text-${color}`;
+}
+
+function updateValidationStrip(inputStr, outputStr, format, prefix="val") {
+  // 1. Size Change
+  const inLen = inputStr.length;
+  const outLen = outputStr.length;
+  let diffPct = 0;
+  if (inLen > 0) {
+    diffPct = ((outLen - inLen) / inLen) * 100;
+  }
+  const absDiff = Math.abs(diffPct);
+  let sizeColor = "green";
+  if (absDiff > 25) sizeColor = "red";
+  else if (absDiff > 12) sizeColor = "amber";
+  
+  const pctStr = diffPct > 0 ? "+" + diffPct.toFixed(1) : diffPct.toFixed(1);
+  const sizeText = `${inLen} \u2192 ${outLen} (${pctStr}%)`;
+  setValidationItem(prefix, "size", sizeColor, sizeText);
+  
+  // 2. Format & 3. Structure
+  if (format === "json") {
+    try {
+      const outJson = JSON.parse(outputStr);
+      setValidationItem(prefix, "format", "green", "Valid JSON");
+      
+      const inJson = JSON.parse(inputStr);
+      const inKeys = countJsonKeys(inJson);
+      const outKeys = countJsonKeys(outJson);
+      
+      const structColor = inKeys === outKeys ? "green" : "red";
+      setValidationItem(prefix, "struct", structColor, `${inKeys} keys \u2192 ${outKeys} keys`);
+    } catch(e) {
+      setValidationItem(prefix, "format", "red", "Invalid JSON (Do not paste)");
+      setValidationItem(prefix, "struct", "red", "Parse Error");
+    }
+  } else if (format === "html") {
+    setValidationItem(prefix, "format", "green", "Contains HTML");
+    
+    const inTags = countHtmlTags(inputStr);
+    const outTags = countHtmlTags(outputStr);
+    const diff = Math.abs(inTags - outTags);
+    
+    let structColor = "green";
+    if (diff > 2) structColor = "red";
+    else if (diff > 0) structColor = "amber";
+    
+    setValidationItem(prefix, "struct", structColor, `${inTags} tags \u2192 ${outTags} tags`);
+  } else {
+    setValidationItem(prefix, "format", "green", "Plain Text");
+    setValidationItem(prefix, "struct", "gray", "No structure to check");
+  }
+}
+
+async function handleUpdate() {
+  hideError(2);
+  const facts = document.getElementById("verifiedFacts").value.trim();
+  const content = document.getElementById("inputContent").value.trim();
+  
+  if (!facts) {
+    showError(2, "Verified facts are missing. Please complete Step 1 first.");
+    return;
+  }
+  if (!content) {
+    showError(2, "Please paste cell content to update.");
+    return;
+  }
+  
+  const btn = document.getElementById("btnUpdate");
+  btn.classList.add("loading");
+  btn.disabled = true;
+  document.getElementById("btnCopy").disabled = true;
+  
+  const userText = "NOTIFICATION FACTS:\\n" + facts + "\\n\\nCONTENT (type: " + detectedType + "):\\n" + content;
+  
+  try {
+    const result = await callModel(UPDATE_PROMPT, userText);
+    const cleanResult = stripMarkdownFences(result);
+    
+    document.getElementById("outputContent").value = cleanResult;
+    updateValidationStrip(content, cleanResult, detectedType, "val");
+    
+    document.getElementById("btnCopy").disabled = false;
+  } catch (error) {
+    showError(2, error.message + " — Please check facts format, API key, and try again.");
+    
+    // reset validation strip on error
+    setValidationItem("val", "size", "gray", "Pending");
+    setValidationItem("val", "format", "gray", "Pending");
+    setValidationItem("val", "struct", "gray", "Pending");
+  } finally {
+    btn.classList.remove("loading");
+    btn.disabled = false;
+  }
+}
+
+function copyOutput() {
+  const out = document.getElementById("outputContent");
+  out.select();
+  document.execCommand("copy");
+  
+  const feedback = document.getElementById("copyFeedback");
+  feedback.style.display = "inline";
+  setTimeout(() => {
+    feedback.style.display = "none";
+  }, 2000);
+}
+
+// ==========================================
+// STEP 3 LOGIC (Future Projection)
+// ==========================================
+let detectedType3 = "text";
+
+function handleContentInput3() {
+  const text = document.getElementById("inputContent3").value;
+  const chip = document.getElementById("typeChip3");
+  const btn = document.getElementById("btnFutureUpdate");
+  
+  detectedType3 = detectFormat(text);
+  chip.style.display = text ? "inline-block" : "none";
+  chip.textContent = "Detected: " + (detectedType3 === "json" ? "FAQ JSON" : (detectedType3 === "html" ? "HTML" : "Plain text"));
+  
+  btn.disabled = text.trim() === "";
+}
+
+async function handleFutureUpdate() {
+  hideError(3);
+  const content = document.getElementById("inputContent3").value.trim();
+  const year = document.getElementById("targetYear").value;
+  
+  if (!content) {
+    showError(3, "Please paste cell content to project.");
+    return;
+  }
+  
+  const btn = document.getElementById("btnFutureUpdate");
+  btn.classList.add("loading");
+  btn.disabled = true;
+  document.getElementById("btnCopy3").disabled = true;
+  
+  const userText = "TARGET YEAR: " + year + "\\n\\nCONTENT (type: " + detectedType3 + "):\\n" + content;
+  
+  try {
+    const result = await callModel(FUTURE_PROMPT, userText);
+    const cleanResult = stripMarkdownFences(result);
+    
+    document.getElementById("outputContent3").value = cleanResult;
+    updateValidationStrip(content, cleanResult, detectedType3, "val3");
+    
+    document.getElementById("btnCopy3").disabled = false;
+  } catch (error) {
+    showError(3, error.message + " — Please verify API key and try again.");
+    
+    setValidationItem("val3", "size", "gray", "Pending");
+    setValidationItem("val3", "format", "gray", "Pending");
+    setValidationItem("val3", "struct", "gray", "Pending");
+  } finally {
+    btn.classList.remove("loading");
+    btn.disabled = false;
+  }
+}
+
+function copyOutput3() {
+  const out = document.getElementById("outputContent3");
+  out.select();
+  document.execCommand("copy");
+  
+  const feedback = document.getElementById("copyFeedback3");
+  feedback.style.display = "inline";
+  setTimeout(() => {
+    feedback.style.display = "none";
+  }, 2000);
+}
+</script>
+</body>
+</html>
