@@ -593,7 +593,7 @@ STRICT RULES:
 1. Do NOT add sentences, sections, tips, points, or explanations.
 2. Do NOT delete content unless a fact makes it factually wrong.
 3. Do NOT paraphrase or rewrite generic/explanatory text. Leave it word-for-word.
-4. If a value is "NOT STATED" or absent in NOTIFICATION FACTS, check if the CONTENT contains an old date or number from a previous cycle (e.g., a past exam date). If it does, REPLACE the old date or number with "To be notified" or "To be announced". Do NOT leave outdated facts from previous cycles in the text. Never invent or guess a date.
+4. If a value is "NOT STATED" or absent in NOTIFICATION FACTS, check if the CONTENT contains an old date or number from a previous cycle (e.g., a past exam date). If it does, REPLACE the old date or number with "To be notified" or "To be announced". IMPORTANT: Rephrase the surrounding sentence slightly so it remains grammatically correct (e.g., change "will take place on 20th Jan" to "will be announced soon" instead of "on To be announced"). Do NOT leave outdated facts from previous cycles in the text. Never invent or guess a date.
 5. Preserve structure exactly:
    - HTML: every tag, attribute, class, and nesting stays identical. Change only the text between tags. Return the same tags in the same order.
    - JSON: return the same keys and schema, valid JSON, same order. Change only values.
@@ -614,7 +614,7 @@ STRICT RULES:
 3. Preserve structure exactly:
    - HTML: every tag, attribute, class, and nesting stays identical. Change only the text between tags.
    - JSON: return the same keys and schema, valid JSON, same order.
-4. SCRUB OLD DATES: The provided content contains exact dates from a past cycle. You MUST replace all specific past dates (like "20th January 2026", "January 2026", etc.) with "To be notified" or "To be announced". Never leave exact dates from previous cycles.
+4. SCRUB OLD DATES: The provided content contains exact dates from a past cycle. You MUST replace all specific past dates (like "20th January 2026", "January 2026", etc.) with "To be notified" or "To be announced". IMPORTANT: Rephrase the surrounding sentence slightly so it remains grammatically correct (e.g., change "will take place on 20th Jan" to "will be announced soon" instead of "on To be announced"). Never leave exact dates from previous cycles.
 5. Output ONLY the updated CONTENT, in the exact same format received. No commentary, no markdown fences, no notes.
 6. CRITICAL: DO NOT TRUNCATE. You must output the ENTIRE length of the provided content from start to finish. Do not omit, summarize, or skip any tags or text, even if they are long or unchanged.`;
 
